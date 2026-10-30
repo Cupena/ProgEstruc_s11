@@ -1,21 +1,22 @@
-
-def __init__(self, dato):
-    self.dato = dato
-    self.izquierdo = None
-    self.derecho = None
-    raiz = Nodo("Ana")
-        
-    raiz.izquierdo = Nodo("Luis")
-    raiz.derecho = Nodo("María")
-    print("Raíz:", raiz.dato)
-    print("Hijo izquierdo:", raiz.izquierdo.dato)
-    print("Hijo derecho:", raiz.derecho.dato)
+def crear_nodo(dato):
+    return {
+        "dato": dato,
+        "izquierdo": None,
+        "derecho": None
+    }
 
 
-def __init__(self, dato):
-    self.dato = dato
-    self.izquierdo = None
-    self.derecho = None
-    raiz = Nodo("A")
-    raiz.izquierdo = Nodo("B")
-    raiz.derecho = Nodo("C")
+raiz = crear_nodo("A")
+raiz["izquierdo"] = crear_nodo("B")
+raiz["derecho"] = crear_nodo("C")
+
+
+def recorrer(nodo):
+    if nodo is not None:
+        print(nodo["dato"])
+        recorrer(nodo["izquierdo"])
+        recorrer(nodo["derecho"])
+
+
+print("Recorrido del árbol:")
+recorrer(raiz)
