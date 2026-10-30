@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Árbol binario interactivo</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #13233b;
+      --muted: #62718a;
+      --line: #dae3ef;
+      --navy: #122744;
+      --blue: #2563eb;
+      --blue-dark: #1c4bcc;
+      --bg: #f3f6fb;
+      --white: #fff;
+      --aqua: #06b6d4;
+      --danger: #b42336;
+      --good: #087a63;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--bg); font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; color: var(--ink); }
+    button, input, select { font: inherit; }
+    .topbar { background: var(--navy); color: white; padding: 25px 28px 29px; }
+    .topbar .wrap { max-width: 1200px; margin: auto; }
+    .eyebrow { color: #8bddec; font-size: 11px; letter-spacing: .15em; text-transform: uppercase; font-weight: 750; }
+    h1 { font-size: clamp(24px, 3.1vw, 35px); letter-spacing: -.035em; line-height: 1.14; margin: 8px 0; }
+    .intro { color: #c8d5e8; font-size: 14px; max-width: 650px; line-height: 1.6; margin: 0; }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+    .main { display: grid; grid-template-columns: minmax(270px, 340px) minmax(0, 1fr); gap: 20px; margin: 24px auto 38px; padding: 0 22px; align-items: start; }
+    .card { background: var(--white); border: 1px solid var(--line); box-shadow: 0 6px 24px rgba(21,45,82,.035); border-radius: 16px; }
+    .panel { padding: 23px; }
+    .panel h2, .canvas h2 { font-size: 16px; font-weight: 750; margin: 0; letter-spacing: -.01em; }
+    .panel .subtitle, .canvas .subtitle { font-size: 12px; color: var(--muted); line-height: 1.5; margin: 8px 0 23px; }
+    .field { margin-bottom: 17px; }
+    label { font-size: 12px; font-weight: 700; display: block; margin-bottom: 8px; }
+    input, select { display: block; width: 100%; border: 1px solid #cdd9e9; background: white; border-radius: 10px; padding: 11px 12px; color: var(--ink); min-height: 43px; outline: none; }
+    input:focus, select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(37,99,235,.11); }
+    .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .choices label { display: flex; align-items: center; gap: 8px; padding: 11px 10px; border: 1px solid #cdd9e9; border-radius: 10px; cursor: pointer; margin: 0; font-weight: 600; }
+    .choices label:has(input:checked) { border-color: var(--blue); background: #eff5ff; color: #204db5; }
+    .choices input { width: auto; min-height: auto; accent-color: var(--blue); margin: 0; }
+    .btn { appearance: none; border: 0; border-radius: 10px; background: var(--blue); color: white; cursor: pointer; font-weight: 700; padding: 12px 15px; transition: background .15s, transform .15s; }
+    .btn:hover { background: var(--blue-dark); }
+    .btn:active { transform: translateY(1px); }
+    .btn:focus-visible, .small-btn:focus-visible { outline: 3px solid #8bb5ff; outline-offset: 3px; }
+    .full { width: 100%; }
+    .message { display: none; margin-top: 14px; padding: 11px 12px; border-radius: 9px; font-size: 12px; line-height: 1.5; }
+    .message.visible { display: block; }
+    .message.error { background: #fff0f0; color: var(--danger); }
+    .message.success { background: #e9f8f1; color: #08624c; }
+    .tips { border-top: 1px solid var(--line); padding-top: 18px; margin-top: 23px; }
+    .tips h3 { font-size: 12px; margin: 0 0 8px; }
+    .tips p { color: var(--muted); font-size: 12px; line-height: 1.6; margin: 0; }
+    .canvas { min-width: 0; overflow: hidden; }
+    .canvas-head { padding: 23px 24px 16px; display: flex; justify-content: space-between; gap: 16px; align-items: start; }
+    .canvas-head .subtitle { margin: 8px 0 0; }
+    .small-btn { background: #eef3fb; color: #334968; border: 1px solid #dce5f0; padding: 9px 12px; border-radius: 9px; font-size: 12px; font-weight: 650; cursor: pointer; white-space: nowrap; }
+    .small-btn:hover { background: #e5edf8; }
+    .stats { display: flex; flex-wrap: wrap; gap: 10px; padding: 0 24px 15px; }
+    .stat { border: 1px solid #e4eaf3; border-radius: 9px; padding: 8px 11px; font-size: 12px; color: var(--muted); }
+    .stat strong { color: var(--ink); font-size: 14px; margin-left: 4px; }
+    .graph-scroll { min-height: 345px; overflow: auto; background-color: #fbfcff; background-image: radial-gradient(#dbe5f3 .8px, transparent .8px); background-size: 18px 18px; border-top: 1px solid #e8eef6; border-bottom: 1px solid #e8eef6; }
+    .graph-inner { min-width: 100%; display: flex; justify-content: center; align-items: flex-start; }
+    #arbolSvg { display: block; flex: none; max-width: none; }
+    .node-circle { fill: #e6f0ff; stroke: #5186e7; stroke-width: 2; cursor: pointer; transition: fill .16s, stroke .16s; }
+    .node-group:hover .node-circle, .node-group:focus .node-circle { fill: #d1e4ff; stroke: #1d54ba; stroke-width: 3; }
+    .node-group.selected .node-circle { fill: #d2f7f3; stroke: #079f94; stroke-width: 3; }
+    .node-label { fill: #143962; font-size: 13px; font-weight: 750; pointer-events: none; }
+    .node-group.selected .node-label { fill: #006b64; }
+    .edge { stroke: #92aac7; stroke-width: 2.5; fill: none; }
+    .result { padding: 21px 24px 24px; }
+    .result-header { display: flex; gap: 12px; justify-content: space-between; align-items: center; flex-wrap: wrap; }
+    .result h3 { margin: 0; font-size: 14px; }
+    .order { font-size: 12px; color: var(--muted); margin: 7px 0 14px; }
+    .path { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; min-height: 42px; }
+    .token { display: inline-flex; align-items: center; background: #edf4ff; border: 1px solid #d1e1ff; color: #1d52ad; padding: 6px 10px; font-size: 13px; font-weight: 750; border-radius: 8px; }
+    .arrow { color: #8295b2; font-size: 14px; }
+    .footer { max-width: 1200px; margin: -16px auto 28px; padding: 0 22px; color: #72819a; font-size: 11px; }
+    @media (max-width: 800px) { .main { grid-template-columns: 1fr; } .panel { padding: 20px; } .graph-scroll { min-height: 290px; } }
+    @media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar"><div class="wrap">
+    <div class="eyebrow">Estructuras de datos / Python → JavaScript</div>
+    <h1>Árbol binario interactivo</h1>
+    <p class="intro">Agrega nodos, selecciona su padre y escoge si serán hijos izquierdos o derechos. Observa cómo crece el árbol y consulta su recorrido.</p>
+  </div></header>
+
+  <main class="wrap main">
+    <section class="card panel" aria-labelledby="formTitle">
+      <h2 id="formTitle">Agregar un nodo</h2>
+      <p class="subtitle">Empieza desde la raíz A. Puedes hacer clic sobre cualquier nodo del gráfico para elegirlo como padre.</p>
+      <form id="formAgregar">
+        <div class="field">
+          <label for="nombre">Nombre del nuevo nodo</label>
+          <input id="nombre" name="nombre" type="text" maxlength="22" placeholder="Ejemplo: B, Carlos, 15..." autocomplete="off" required />
+        </div>
+        <div class="field">
+          <label for="padre">Nodo padre</label>
+          <select id="padre" name="padre" aria-label="Elegir nodo padre"></select>
+        </div>
+        <div class="field">
+          <label>Ubicación del nuevo nodo</label>
+          <div class="choices" role="group" aria-label="Elegir lado">
+            <label><input type="radio" name="lado" value="izquierdo" checked /> Izquierdo</label>
+            <label><input type="radio" name="lado" value="derecho" /> Derecho</label>
+          </div>
+        </div>
+        <button type="submit" class="btn full">+ Agregar nodo</button>
+      </form>
+      <p id="mensaje" class="message" role="status" aria-live="polite"></p>
+      <div class="tips">
+        <h3>¿Cómo se agrega?</h3>
+        <p>Cada nodo guarda un <b>dato</b>, un <b>hijo izquierdo</b> y un <b>hijo derecho</b>. Cada lado puede contener solamente un hijo. No se permiten nombres duplicados.</p>
+      </div>
+    </section>
+
+    <section class="card canvas" aria-labelledby="treeTitle">
+      <div class="canvas-head">
+        <div><h2 id="treeTitle">Visualización del árbol</h2><p class="subtitle">Haz clic en un nodo para seleccionarlo como padre.</p></div>
+        <button id="reiniciar" class="small-btn" type="button">Reiniciar árbol</button>
+      </div>
+      <div class="stats">
+        <div class="stat">Nodos <strong id="cantidad">1</strong></div>
+        <div class="stat">Niveles <strong id="niveles">1</strong></div>
+        <div class="stat">Raíz <strong id="raizLabel">A</strong></div>
+      </div>
+      <div class="graph-scroll" id="contenedorGrafico">
+        <div class="graph-inner"><svg id="arbolSvg" role="img" aria-label="Árbol binario" xmlns="http://www.w3.org/2000/svg"></svg></div>
+      </div>
+      <div class="result">
+        <div class="result-header">
+          <h3>Recorrido del árbol</h3>
+          <button id="recorrer" class="small-btn" type="button">Mostrar recorrido</button>
+        </div>
+        <p class="order">Preorden: primero raíz, después izquierda y finalmente derecha.</p>
+        <div class="path" id="recorrido" aria-live="polite"></div>
+      </div>
+    </section>
+  </main>
+  <footer class="footer">Proyecto HTML + CSS + JavaScript · Funciona sin conexión a Internet · Sin clases</footer>
+
+  <script>
+    // Equivalente a Python: crear_nodo(dato) -> {dato, izquierdo, derecho}
+    function crearNodo(dato) {
+      return { dato: dato, izquierdo: null, derecho: null };
+    }
+
+    let raiz = crearNodo("A");
+
+    // Busca un nodo por nombre dentro del árbol (recursivo).
+    function buscarNodo(nodo, nombre) {
+      if (nodo === null) return null;
+      if (nodo.dato === nombre) return nodo;
+      return buscarNodo(nodo.izquierdo, nombre) || buscarNodo(nodo.derecho, nombre);
+    }
+
+    function recorrerPreorden(nodo, resultado = []) {
+      if (nodo !== null) {
+        resultado.push(nodo.dato);
+        recorrerPreorden(nodo.izquierdo, resultado);
+        recorrerPreorden(nodo.derecho, resultado);
+      }
+      return resultado;
+    }
+
+    function listaNodos(nodo, resultado = []) {
+      if (nodo !== null) {
+        resultado.push(nodo);
+        listaNodos(nodo.izquierdo, resultado);
+        listaNodos(nodo.derecho, resultado);
+      }
+      return resultado;
+    }
+
+    function niveles(nodo) {
+      return nodo === null ? 0 : 1 + Math.max(niveles(nodo.izquierdo), niveles(nodo.derecho));
+    }
+
+    const svg = document.getElementById("arbolSvg");
+    const selectorPadre = document.getElementById("padre");
+    const entradaNombre = document.getElementById("nombre");
+    const mensaje = document.getElementById("mensaje");
+    const salidaRecorrido = document.getElementById("recorrido");
+    const NS = "http://www.w3.org/2000/svg";
+
+    function avisar(texto, tipo = "error") {
+      mensaje.textContent = texto;
+      mensaje.className = `message visible ${tipo}`;
+    }
+
+    function limpiarAviso() {
+      mensaje.textContent = "";
+      mensaje.className = "message";
+    }
+
+    function actualizarPadres(seleccion = selectorPadre.value) {
+      selectorPadre.replaceChildren();
+      listaNodos(raiz).forEach((nodo) => {
+        const opcion = document.createElement("option");
+        opcion.value = nodo.dato;
+        opcion.textContent = nodo.dato;
+        selectorPadre.append(opcion);
+      });
+      selectorPadre.value = buscarNodo(raiz, seleccion) ? seleccion : raiz.dato;
+    }
+
+    // Dibuja las ramas y los nodos. El orden inorden asigna posiciones
+    // horizontales que evitan que dos nodos ocupen el mismo espacio.
+    function dibujarArbol() {
+      svg.replaceChildren();
+      const posiciones = [];
+      let indice = 0;
+      function asignar(nodo, profundidad) {
+        if (nodo === null) return;
+        asignar(nodo.izquierdo, profundidad + 1);
+        posiciones.push({ nodo, x: 55 + indice * 85, y: 62 + profundidad * 105 });
+        indice++;
+        asignar(nodo.derecho, profundidad + 1);
+      }
+      asignar(raiz, 0);
+      const totalNiveles = niveles(raiz);
+      const ancho = Math.max(580, 110 + (posiciones.length - 1) * 85);
+      const alto = Math.max(315, 120 + (totalNiveles - 1) * 105);
+      const delta = (ancho - (110 + (posiciones.length - 1) * 85)) / 2;
+      posiciones.forEach((p) => p.x += delta);
+      svg.setAttribute("width", ancho);
+      svg.setAttribute("height", alto);
+      svg.setAttribute("viewBox", `0 0 ${ancho} ${alto}`);
+      svg.setAttribute("aria-label", `Árbol binario con ${posiciones.length} nodos`);
+
+      const punto = new Map(posiciones.map((p) => [p.nodo, p]));
+      posiciones.forEach((p) => {
+        for (const hijo of [p.nodo.izquierdo, p.nodo.derecho]) {
+          if (!hijo) continue;
+          const destino = punto.get(hijo);
+          const linea = document.createElementNS(NS, "line");
+          linea.setAttribute("x1", p.x);
+          linea.setAttribute("y1", p.y);
+          linea.setAttribute("x2", destino.x);
+          linea.setAttribute("y2", destino.y);
+          linea.setAttribute("class", "edge");
+          svg.append(linea);
+        }
+      });
+
+      posiciones.forEach(({ nodo, x, y }) => {
+        const grupo = document.createElementNS(NS, "g");
+        grupo.setAttribute("class", `node-group${selectorPadre.value === nodo.dato ? " selected" : ""}`);
+        grupo.setAttribute("role", "button");
+        grupo.setAttribute("tabindex", "0");
+        grupo.setAttribute("aria-label", `Seleccionar ${nodo.dato} como padre`);
+
+        const circulo = document.createElementNS(NS, "circle");
+        circulo.setAttribute("cx", x);
+        circulo.setAttribute("cy", y);
+        circulo.setAttribute("r", 29);
+        circulo.setAttribute("class", "node-circle");
+        const texto = document.createElementNS(NS, "text");
+        texto.setAttribute("x", x);
+        texto.setAttribute("y", y + 5);
+        texto.setAttribute("text-anchor", "middle");
+        texto.setAttribute("class", "node-label");
+        const nombre = nodo.dato.length > 8 ? `${nodo.dato.slice(0, 7)}…` : nodo.dato;
+        texto.textContent = nombre;
+        const titulo = document.createElementNS(NS, "title");
+        titulo.textContent = nodo.dato;
+        grupo.append(titulo, circulo, texto);
+
+        function seleccionar() {
+          selectorPadre.value = nodo.dato;
+          dibujarArbol();
+          limpiarAviso();
+          entradaNombre.focus();
+        }
+        grupo.addEventListener("click", seleccionar);
+        grupo.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            seleccionar();
+          }
+        });
+        svg.append(grupo);
+      });
+    }
+
+    function mostrarRecorrido() {
+      const datos = recorrerPreorden(raiz);
+      salidaRecorrido.replaceChildren();
+      datos.forEach((dato, indice) => {
+        if (indice > 0) {
+          const flecha = document.createElement("span");
+          flecha.className = "arrow";
+          flecha.textContent = "→";
+          salidaRecorrido.append(flecha);
+        }
+        const token = document.createElement("span");
+        token.className = "token";
+        token.textContent = dato;
+        salidaRecorrido.append(token);
+      });
+    }
+
+    function actualizarVista(seleccion) {
+      actualizarPadres(seleccion);
+      document.getElementById("cantidad").textContent = listaNodos(raiz).length;
+      document.getElementById("niveles").textContent = niveles(raiz);
+      document.getElementById("raizLabel").textContent = raiz.dato;
+      dibujarArbol();
+      mostrarRecorrido();
+    }
+
+    document.getElementById("formAgregar").addEventListener("submit", (evento) => {
+      evento.preventDefault();
+      const nombre = entradaNombre.value.trim();
+      const padre = selectorPadre.value;
+      const lado = document.querySelector('input[name="lado"]:checked').value;
+
+      if (!nombre) return avisar("Escribe el nombre del nuevo nodo.");
+      if (buscarNodo(raiz, nombre)) return avisar(`Ya existe un nodo llamado "${nombre}".`);
+      const nodoPadre = buscarNodo(raiz, padre);
+      if (!nodoPadre) return avisar("No se encontró el nodo padre.");
+      if (nodoPadre[lado] !== null) return avisar(`El lado ${lado} de "${padre}" ya está ocupado. Selecciona otro lado o padre.`);
+
+      nodoPadre[lado] = crearNodo(nombre);
+      actualizarVista(padre);
+      avisar(`Se agregó "${nombre}" como hijo ${lado} de "${padre}".`, "success");
+      entradaNombre.value = "";
+      entradaNombre.focus();
+    });
+
+    selectorPadre.addEventListener("change", dibujarArbol);
+    document.getElementById("recorrer").addEventListener("click", mostrarRecorrido);
+    document.getElementById("reiniciar").addEventListener("click", () => {
+      if (!confirm("¿Quieres borrar todos los nodos y volver a empezar con A?")) return;
+      raiz = crearNodo("A");
+      document.getElementById("formAgregar").reset();
+      actualizarVista("A");
+      avisar("Árbol reiniciado. La raíz vuelve a ser A.", "success");
+    });
+
+    actualizarVista("A");
+  </script>
+</body>
+</html>
